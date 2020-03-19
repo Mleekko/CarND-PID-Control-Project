@@ -19,7 +19,6 @@ the Twiddle algorithm that would adjust the PID coeffs by just driving the track
     [Kp = 0.169248, Ki = 0.00100723, Kd = 1.64468]
 
 ### The vehicle must successfully drive a lap around the track.
-Yes, it does!
-
-<iframe width="560" height="315" src="https://www.youtube.com/embed/mPFFiNDQxJM" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+Yes, it does! Video:
+[![Watch the video](https://img.youtube.com/vi/mPFFiNDQxJM/maxresdefault.jpg)](https://youtu.be/mPFFiNDQxJM)
 
