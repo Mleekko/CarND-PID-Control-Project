@@ -4,6 +4,7 @@
 #include <string>
 #include "json.hpp"
 #include "PID.h"
+#include "SteeringWheel.h"
 
 // for convenience
 using nlohmann::json;
@@ -35,11 +36,14 @@ int main() {
     uWS::Hub h;
 
     PID pid;
-    /**
-     * TODO: Initialize the pid variable.
-     */
+    double kP = 0.169248;
+    double kI = 0.00100723;
+    double kD = 1.64468;
+    pid.Init(kP, kI, kD);
 
-    h.onMessage([&pid](uWS::WebSocket <uWS::SERVER> ws, char *data, size_t length,
+    SteeringWheel steer;
+
+    h.onMessage([&pid, &steer](uWS::WebSocket <uWS::SERVER> ws, char *data, size_t length,
                        uWS::OpCode opCode) {
         // "42" at the start of the message means there's a websocket message event.
         // The 4 signifies a websocket message
@@ -57,23 +61,18 @@ int main() {
                     double cte = std::stod(j[1]["cte"].get<string>());
                     double speed = std::stod(j[1]["speed"].get<string>());
                     double angle = std::stod(j[1]["steering_angle"].get<string>());
-                    double steer_value;
-                    /**
-                     * TODO: Calculate steering value here, remember the steering value is
-                     *   [-1, 1].
-                     * NOTE: Feel free to play around with the throttle and speed.
-                     *   Maybe use another PID controller to control the speed!
-                     */
 
-                    // DEBUG
-                    std::cout << "CTE: " << cte << " Steering Value: " << steer_value
-                              << std::endl;
+                    pid.UpdateError(cte);
+                    double steerAngle = steer.turnTo(pid.getControlValue());
+
+                    // drive slower when turning
+                    double throttle = (4 - std::pow((1 + std::abs(steerAngle)), 2)) * 0.05 + 0.05;
 
                     json msgJson;
-                    msgJson["steering_angle"] = steer_value;
-                    msgJson["throttle"] = 0.3;
+                    msgJson["steering_angle"] = steerAngle;
+                    msgJson["throttle"] = throttle;
                     auto msg = "42[\"steer\"," + msgJson.dump() + "]";
-                    std::cout << msg << std::endl;
+//                    std::cout << msg << std::endl;
                     ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
                 }  // end "telemetry" if
             } else {
@@ -84,7 +83,8 @@ int main() {
         }  // end websocket message if
     }); // end h.onMessage
 
-    h.onConnection([&h](uWS::WebSocket <uWS::SERVER> ws, uWS::HttpRequest req) {
+    h.onConnection([&h, &steer](uWS::WebSocket <uWS::SERVER> ws, uWS::HttpRequest req) {
+        steer.reset();
         std::cout << "Connected!!!" << std::endl;
     });
 
